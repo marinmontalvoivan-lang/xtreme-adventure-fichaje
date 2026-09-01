@@ -1,29 +1,1690 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Xtreme Adventure · Fichaje</title><style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#0d1117;color:#f5f5f5;min-height:100vh}.wrap{max-width:900px;margin:auto;padding:24px}.brand{text-align:center;margin:20px 0 28px}.brand h1{margin:0;font-size:34px}.brand p{color:#aaa}.card{background:#171d25;border:1px solid #2a3340;border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:0 8px 30px #0005}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.employee{padding:18px;border-radius:14px;background:#222a35;border:1px solid #303b49;color:white;font-size:16px;cursor:pointer}.employee:hover{border-color:#61dafb}.selected{border-color:#61dafb;background:#253442}.pin{display:flex;gap:8px;margin-top:14px}.pin input{flex:1;padding:14px;border-radius:10px;border:1px solid #394554;background:#0f141a;color:white;font-size:18px;text-align:center;letter-spacing:5px}.btn{padding:14px 18px;border:0;border-radius:11px;cursor:pointer;font-weight:bold;font-size:16px}.green{background:#22c55e;color:#07120a}.red{background:#ef4444;color:white}.blue{background:#3b82f6;color:white}.gray{background:#374151;color:white}.msg{margin-top:14px;padding:12px;border-radius:10px;background:#111827;color:#ddd}.hidden{display:none}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#11161d;border-radius:12px;padding:14px;text-align:center}.stat b{display:block;font-size:24px;margin-top:5px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px;border-bottom:1px solid #2c3440;text-align:left}th{color:#aaa}.status{font-weight:bold}.on{color:#22c55e}.off{color:#aaa}.danger{color:#fca5a5}@media(max-width:600px){.stats{grid-template-columns:1fr}.wrap{padding:12px}}
-</style></head><body><div class="wrap">
-<div class="brand"><div style="font-size:48px">⚡</div><h1>XTREME ADVENTURE</h1><p>Control de fichaje</p></div>
-<div id="employeeView" class="card"><h2>Fichaje de empleado</h2><p>Selecciona tu nombre:</p><div id="employees" class="grid"></div><div id="pinArea" class="hidden"><div class="pin"><input id="pin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN"><button class="btn blue" onclick="login()">Entrar</button></div><div id="loginMsg"></div></div><div id="clockArea" class="hidden"><div class="msg" id="welcome"></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button class="btn green" onclick="clockIn()">🟢 FICHAR ENTRADA</button><button class="btn red" onclick="clockOut()">🔴 FICHAR SALIDA</button><button class="btn gray" onclick="logout()">Cerrar</button></div><div id="clockMsg"></div></div></div>
-<div class="card"><div class="top"><h2 style="margin:0">👑 Administrador</h2><button class="btn gray" onclick="showAdmin()">Abrir panel</button></div><div id="admin" class="hidden"></div></div>
-</div><script>
-const employees=["Francis Anton Lopez","Pedro Martinez","Jose Fernandez","Kiara Bennett","Alejandro de la Vega","Canadela Garcia","Sergio Costa","Issac Moreno","Pedro Josue Almeida","Mateo Salazar"];
-const defaultPins={"Francis Anton Lopez":"1001","Pedro Martinez":"1002","Jose Fernandez":"1003","Kiara Bennett":"1004","Alejandro de la Vega":"1005","Canadela Garcia":"1006","Sergio Costa":"1007","Issac Moreno":"1008","Pedro Josue Almeida":"1009","Mateo Salazar":"1010"};
-const ADMIN_PIN="9999";let selected=null,logged=null;
-const getLogs=()=>JSON.parse(localStorage.getItem('xtremeLogs')||'[]'); const saveLogs=x=>localStorage.setItem('xtremeLogs',JSON.stringify(x));
-function renderEmployees(){document.getElementById('employees').innerHTML=employees.map(e=>`<button class="employee ${selected===e?'selected':''}" onclick="selectEmp('${e.replace(/'/g,"\\'")}')">👤 ${e}</button>`).join('')}
-function selectEmp(e){selected=e;document.getElementById('pinArea').classList.remove('hidden');document.getElementById('clockArea').classList.add('hidden');document.getElementById('pin').value='';document.getElementById('loginMsg').innerHTML='';renderEmployees();document.getElementById('pin').focus()}
-function login(){const p=document.getElementById('pin').value;if(p===defaultPins[selected]){logged=selected;document.getElementById('pinArea').classList.add('hidden');document.getElementById('clockArea').classList.remove('hidden');document.getElementById('welcome').textContent='Has iniciado sesión como '+logged;updateClockMsg()}else document.getElementById('loginMsg').innerHTML='<div class="msg danger">PIN incorrecto.</div>'}
-function logout(){logged=null;document.getElementById('clockArea').classList.add('hidden');document.getElementById('pinArea').classList.add('hidden');selected=null;renderEmployees()}
-function clockIn(){if(!logged)return;let logs=getLogs();if(logs.some(x=>x.employee===logged&&!x.out)){updateClockMsg('Ya tienes un fichaje abierto.');return}logs.push({id:Date.now(),employee:logged,in:new Date().toISOString(),out:null});saveLogs(logs);updateClockMsg('Entrada registrada correctamente.');}
-function clockOut(){if(!logged)return;let logs=getLogs(),i=-1;for(let j=logs.length-1;j>=0;j--)if(logs[j].employee===logged&&!logs[j].out){i=j;break}if(i<0){updateClockMsg('No hay una entrada abierta.');return}logs[i].out=new Date().toISOString();saveLogs(logs);updateClockMsg('Salida registrada correctamente.');}
-function updateClockMsg(t=''){const logs=getLogs(),open=logs.find(x=>x.employee===logged&&!x.out);document.getElementById('clockMsg').innerHTML='<div class="msg">'+(t|| (open?'🟢 Estás trabajando desde '+fmt(open.in):'⚪ No tienes un fichaje abierto.'))+'</div>'}
-function fmt(iso){return new Date(iso).toLocaleString('es-ES',{dateStyle:'short',timeStyle:'short'})}
-function dur(a,b){let ms=new Date(b)-new Date(a);if(ms<0)ms=0;let m=Math.floor(ms/60000),h=Math.floor(m/60);m%=60;return h+'h '+String(m).padStart(2,'0')+'min'}
-function totalFor(e){return getLogs().filter(x=>x.employee===e&&x.out).reduce((s,x)=>s+(new Date(x.out)-new Date(x.in)),0)}
-function hm(ms){let m=Math.floor(ms/60000),h=Math.floor(m/60);m%=60;return h+'h '+String(m).padStart(2,'0')+'min'}
-function showAdmin(){const pin=prompt('Introduce el PIN de administrador:');if(pin!==ADMIN_PIN){if(pin!==null)alert('PIN incorrecto');return}renderAdmin()}
-function renderAdmin(){const a=document.getElementById('admin');a.classList.remove('hidden');let logs=getLogs().slice().reverse();let rows=logs.map(x=>`<tr><td>${x.employee}</td><td>${fmt(x.in)}</td><td>${x.out?fmt(x.out):'<span class="on">Trabajando</span>'}</td><td>${x.out?dur(x.in,x.out):'—'}</td><td><button class="btn gray" style="padding:7px 10px" onclick="delLog(${x.id})">Borrar</button></td></tr>`).join('');let summary=employees.map(e=>`<div class="stat"><span>${e}</span><b>${hm(totalFor(e))}</b></div>`).join('');a.innerHTML=`<div class="stats">${summary}</div><div style="display:flex;gap:8px;margin:18px 0;flex-wrap:wrap"><button class="btn blue" onclick="exportCSV()">📥 Exportar Excel/CSV</button><button class="btn red" onclick="clearAll()">Borrar todos</button></div><div style="overflow:auto"><table><thead><tr><th>Empleado</th><th>Entrada</th><th>Salida</th><th>Total</th><th></th></tr></thead><tbody>${rows||'<tr><td colspan="5">No hay fichajes.</td></tr>'}</tbody></table></div>`}
-function delLog(id){if(!confirm('¿Borrar este fichaje?'))return;saveLogs(getLogs().filter(x=>x.id!==id));renderAdmin()}
-function clearAll(){if(confirm('¿Seguro que quieres borrar TODOS los fichajes?')){saveLogs([]);renderAdmin()}}
-function exportCSV(){let logs=getLogs();let csv='Empleado;Entrada;Salida;Horas totales\n'+logs.map(x=>[x.employee,fmt(x.in),x.out?fmt(x.out):'',x.out?dur(x.in,x.out):''].join(';')).join('\n');let blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='fichajes_xtreme_adventure.csv';a.click();URL.revokeObjectURL(url)}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Xtreme Adventure - Fichajes</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #07111f, #0d2438);
+    color: white;
+    min-height: 100vh;
+}
+
+.container {
+    width: 95%;
+    max-width: 1100px;
+    margin: auto;
+    padding: 25px 0 50px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.logo {
+    font-size: 45px;
+}
+
+h1 {
+    font-size: 30px;
+    margin: 8px 0;
+}
+
+.subtitle {
+    color: #9fb3c8;
+}
+
+.card {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 18px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+h2 {
+    margin-bottom: 18px;
+}
+
+.employee-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.employee {
+    background: #102b42;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 15px;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.employee:hover,
+.employee.selected {
+    border-color: #19c37d;
+}
+
+input, select {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #38536b;
+    background: #091b2a;
+    color: white;
+    font-size: 16px;
+    margin-bottom: 12px;
+}
+
+button {
+    border: none;
+    border-radius: 10px;
+    padding: 14px 18px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    margin: 4px;
+}
+
+.btn-green {
+    background: #19c37d;
+    color: white;
+}
+
+.btn-red {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-blue {
+    background: #2980b9;
+    color: white;
+}
+
+.btn-gray {
+    background: #526273;
+    color: white;
+}
+
+.btn-orange {
+    background: #f39c12;
+    color: white;
+}
+
+button:hover {
+    opacity: .88;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.message {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 10px;
+    background: #132b3d;
+}
+
+.welcome {
+    font-size: 22px;
+    margin-bottom: 10px;
+}
+
+.status {
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+.working {
+    color: #19c37d;
+    font-weight: bold;
+}
+
+.finished {
+    color: #aaa;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    text-align: left;
+}
+
+.admin-table th {
+    background: #102b42;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat {
+    background: #102b42;
+    border-radius: 12px;
+    padding: 18px;
+}
+
+.stat-number {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.small {
+    font-size: 13px;
+    color: #9fb3c8;
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+}
+
+.modal-box {
+    background: #0d2438;
+    border-radius: 18px;
+    padding: 25px;
+    width: 100%;
+    max-width: 450px;
+}
+
+@media(max-width:600px) {
+    h1 {
+        font-size: 24px;
+    }
+
+    .logo {
+        font-size: 38px;
+    }
+
+    .admin-table {
+        font-size: 13px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 8px 5px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <div class="logo">🌲</div>
+        <h1>Xtreme Adventure</h1>
+        <div class="subtitle">Sistema de fichajes</div>
+    </div>
+
+    <!-- EMPLEADOS -->
+
+    <div class="card" id="loginCard">
+
+        <h2>👤 Selecciona tu nombre</h2>
+
+        <div class="employee-grid" id="employees"></div>
+
+        <div id="pinArea" class="hidden" style="margin-top:20px;">
+
+            <input
+                type="password"
+                id="pin"
+                maxlength="10"
+                placeholder="Introduce tu PIN"
+            >
+
+            <button class="btn-green" onclick="login()">
+                🔐 Entrar
+            </button>
+
+            <div id="loginMsg"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- FICHAJE -->
+
+    <div class="card hidden" id="clockArea">
+
+        <div class="welcome" id="welcome"></div>
+
+        <div class="status" id="employeeStatus">
+            Estado: comprobando...
+        </div>
+
+        <button class="btn-green" onclick="clockIn()">
+            🟢 Fichar entrada
+        </button>
+
+        <button class="btn-red" onclick="clockOut()">
+            🔴 Fichar salida
+        </button>
+
+        <button class="btn-gray" onclick="logout()">
+            🚪 Cerrar sesión
+        </button>
+
+        <div id="clockMsg"></div>
+
+        <div style="margin-top:25px;">
+            <h3>📊 Mis horas</h3>
+            <div id="myHours" style="margin-top:10px;">
+                Cargando...
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ACCESO ADMIN -->
+
+    <div class="card">
+
+        <h2>🛡️ Administración</h2>
+
+        <p class="small">
+            Acceso exclusivo para propietarios y administradores.
+        </p>
+
+        <button class="btn-blue" onclick="openAdminLogin()">
+            🔐 Entrar al panel
+        </button>
+
+    </div>
+
+
+    <!-- PANEL ADMIN -->
+
+    <div class="card hidden" id="admin">
+
+        <h2>📊 Panel de administración</h2>
+
+        <div id="adminWelcome" class="small"></div>
+
+        <br>
+
+        <div class="stats">
+
+            <div class="stat">
+                👥 Empleados
+                <div class="stat-number" id="totalEmployees">0</div>
+            </div>
+
+            <div class="stat">
+                🟢 Trabajando
+                <div class="stat-number" id="workingEmployees">0</div>
+            </div>
+
+            <div class="stat">
+                ⏱️ Horas totales
+                <div class="stat-number" id="totalHours">0h</div>
+            </div>
+
+        </div>
+
+        <div class="admin-actions">
+
+            <button class="btn-blue" onclick="renderAdmin()">
+                🔄 Actualizar
+            </button>
+
+            <button class="btn-green" onclick="exportCSV()">
+                📥 Exportar CSV
+            </button>
+
+            <button
+                class="btn-orange hidden"
+                id="manageAdminsBtn"
+                onclick="showAdmins()"
+            >
+                👑 Administradores
+            </button>
+
+            <button class="btn-gray" onclick="closeAdmin()">
+                🚪 Cerrar panel
+            </button>
+
+        </div>
+
+        <div id="adminContent" style="overflow-x:auto;"></div>
+
+        <div id="adminsContent"></div>
+
+    </div>
+
+</div>
+
+
+<!-- LOGIN ADMIN -->
+
+<div class="modal hidden" id="adminModal">
+
+    <div class="modal-box">
+
+        <h2>🛡️ Acceso administrativo</h2>
+
+        <p class="small" style="margin-bottom:15px;">
+            Introduce tu PIN.
+        </p>
+
+        <input
+            type="password"
+            id="adminPin"
+            placeholder="PIN"
+        >
+
+        <button class="btn-green" onclick="adminLogin()">
+            Entrar
+        </button>
+
+        <button class="btn-gray" onclick="closeAdminLogin()">
+            Cancelar
+        </button>
+
+        <div id="adminLoginMsg"></div>
+
+    </div>
+
+</div>
+
+
+<!-- NUEVO ADMIN -->
+
+<div class="modal hidden" id="newAdminModal">
+
+    <div class="modal-box">
+
+        <h2>➕ Nuevo administrador</h2>
+
+        <input
+            type="text"
+            id="newAdminName"
+            placeholder="Nombre"
+        >
+
+        <input
+            type="password"
+            id="newAdminPin"
+            placeholder="PIN"
+        >
+
+        <select id="newAdminRole">
+
+            <option value="admin">
+                🛡️ Administrador
+            </option>
+
+            <option value="owner">
+                👑 Propietario
+            </option>
+
+        </select>
+
+        <button class="btn-green" onclick="createAdmin()">
+            Crear administrador
+        </button>
+
+        <button class="btn-gray" onclick="closeNewAdmin()">
+            Cancelar
+        </button>
+
+        <div id="newAdminMsg"></div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   SUPABASE
+   ===================================================== */
+
+/*
+   🔴 IMPORTANTE
+
+   CAMBIA SOLAMENTE ESTAS DOS LÍNEAS.
+*/
+
+const SUPABASE_URL = "https://dxausloqzuzwexpjkqfp.supabase.co/rest/v1/";
+
+const SUPABASE_KEY = "sb_publishable__4Mx4YWxdEQBShgcPTUqLw_mW2pDgTW";
+
+
+const sb = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+/* =====================================================
+   EMPLEADOS
+   ===================================================== */
+
+const employees = [
+    "Francis Anton Lopez",
+    "Pedro Martinez",
+    "Jose Fernandez",
+    "Kiara Bennett",
+    "Alejandro de la Vega",
+    "Canadela Garcia",
+    "Sergio Costa",
+    "Issac Moreno",
+    "Pedro Josue Almeida",
+    "Mateo Salazar"
+];
+
+
+const defaultPins = {
+
+    "Francis Anton Lopez": "1001",
+    "Pedro Martinez": "1002",
+    "Jose Fernandez": "1003",
+    "Kiara Bennett": "1004",
+    "Alejandro de la Vega": "1005",
+    "Canadela Garcia": "1006",
+    "Sergio Costa": "1007",
+    "Issac Moreno": "1008",
+    "Pedro Josue Almeida": "1009",
+    "Mateo Salazar": "1010"
+
+};
+
+
+let selected = null;
+let logged = null;
+let currentAdmin = null;
+
+
+/* =====================================================
+   MOSTRAR EMPLEADOS
+   ===================================================== */
+
+function renderEmployees() {
+
+    const container =
+        document.getElementById("employees");
+
+    container.innerHTML = "";
+
+    employees.forEach(name => {
+
+        const button =
+            document.createElement("button");
+
+        button.className = "employee";
+
+        button.textContent = name;
+
+        button.onclick = () =>
+            selectEmployee(name);
+
+        container.appendChild(button);
+
+    });
+
+}
+
+
+function selectEmployee(name) {
+
+    selected = name;
+
+    document
+        .querySelectorAll(".employee")
+        .forEach(button => {
+
+            button.classList.toggle(
+                "selected",
+                button.textContent === name
+            );
+
+        });
+
+    document
+        .getElementById("pinArea")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("pin")
+        .focus();
+
+}
+
+
+/* =====================================================
+   LOGIN EMPLEADO
+   ===================================================== */
+
+function login() {
+
+    if (!selected) {
+
+        showMessage(
+            "loginMsg",
+            "❌ Selecciona tu nombre."
+        );
+
+        return;
+    }
+
+    const pin =
+        document
+            .getElementById("pin")
+            .value
+            .trim();
+
+    if (pin !== defaultPins[selected]) {
+
+        showMessage(
+            "loginMsg",
+            "❌ PIN incorrecto."
+        );
+
+        return;
+    }
+
+    logged = selected;
+
+    document
+        .getElementById("loginCard")
+        .classList.add("hidden");
+
+    document
+        .getElementById("clockArea")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("welcome")
+        .textContent =
+        "👋 Bienvenido/a, " + logged;
+
+    document
+        .getElementById("pin")
+        .value = "";
+
+    updateEmployeeStatus();
+
+}
+
+
+/* =====================================================
+   ENTRADA
+   ===================================================== */
+
+async function clockIn() {
+
+    if (!logged) return;
+
+    setClockMessage(
+        "⏳ Registrando entrada..."
+    );
+
+    try {
+
+        const { data, error } =
+            await sb
+                .from("fichajes")
+                .select("id")
+                .eq("empleado", logged)
+                .is("salida", null)
+                .limit(1);
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+
+            setClockMessage(
+                "⚠️ Ya tienes una entrada abierta."
+            );
+
+            return;
+        }
+
+        const { error: insertError } =
+            await sb
+                .from("fichajes")
+                .insert({
+
+                    empleado: logged,
+
+                    entrada:
+                        new Date().toISOString()
+
+                });
+
+        if (insertError)
+            throw insertError;
+
+        setClockMessage(
+            "🟢 Entrada registrada correctamente."
+        );
+
+        await updateEmployeeStatus();
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        setClockMessage(
+            "❌ Error al registrar la entrada."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   SALIDA
+   ===================================================== */
+
+async function clockOut() {
+
+    if (!logged) return;
+
+    setClockMessage(
+        "⏳ Registrando salida..."
+    );
+
+    try {
+
+        const { data, error } =
+            await sb
+                .from("fichajes")
+                .select("*")
+                .eq("empleado", logged)
+                .is("salida", null)
+                .order("entrada", {
+                    ascending: false
+                })
+                .limit(1);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+
+            setClockMessage(
+                "⚠️ No tienes ninguna entrada abierta."
+            );
+
+            return;
+        }
+
+        const { error: updateError } =
+            await sb
+                .from("fichajes")
+                .update({
+
+                    salida:
+                        new Date().toISOString()
+
+                })
+                .eq("id", data[0].id);
+
+        if (updateError)
+            throw updateError;
+
+        setClockMessage(
+            "🔴 Salida registrada correctamente."
+        );
+
+        await updateEmployeeStatus();
+
+    }
+    catch (error) {
+
+        console.error(error);
+
+        setClockMessage(
+            "❌ Error al registrar la salida."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   ESTADO EMPLEADO
+   ===================================================== */
+
+async function updateEmployeeStatus() {
+
+    if (!logged) return;
+
+    const { data, error } =
+        await sb
+            .from("fichajes")
+            .select("*")
+            .eq("empleado", logged)
+            .order("entrada", {
+                ascending: false
+            })
+            .limit(1);
+
+    if (error) {
+
+        console.error(error);
+        return;
+
+    }
+
+    const last =
+        data && data.length
+            ? data[0]
+            : null;
+
+    const status =
+        document.getElementById(
+            "employeeStatus"
+        );
+
+    if (last && !last.salida) {
+
+        status.innerHTML =
+            "🟢 Estado: " +
+            "<span class='working'>TRABAJANDO</span>";
+
+    }
+    else {
+
+        status.innerHTML =
+            "⚪ Estado: " +
+            "<span class='finished'>FUERA DE SERVICIO</span>";
+
+    }
+
+    await renderMyHours();
+
+}
+
+
+/* =====================================================
+   HORAS DEL EMPLEADO
+   ===================================================== */
+
+async function renderMyHours() {
+
+    if (!logged) return;
+
+    const { data, error } =
+        await sb
+            .from("fichajes")
+            .select("*")
+            .eq("empleado", logged)
+            .order("entrada", {
+                ascending: false
+            });
+
+    if (error) {
+
+        console.error(error);
+        return;
+
+    }
+
+    let total = 0;
+
+    data.forEach(row => {
+
+        if (row.salida) {
+
+            total +=
+                new Date(row.salida)
+                -
+                new Date(row.entrada);
+
+        }
+
+    });
+
+    document.getElementById(
+        "myHours"
+    ).innerHTML =
+
+        "<strong>Horas acumuladas:</strong> " +
+        formatDuration(total);
+
+}
+
+
+/* =====================================================
+   CERRAR SESIÓN EMPLEADO
+   ===================================================== */
+
+function logout() {
+
+    logged = null;
+    selected = null;
+
+    document
+        .getElementById("clockArea")
+        .classList.add("hidden");
+
+    document
+        .getElementById("loginCard")
+        .classList.remove("hidden");
+
+    document
+        .querySelectorAll(".employee")
+        .forEach(button =>
+            button.classList.remove("selected")
+        );
+
+}
+
+
+/* =====================================================
+   LOGIN ADMIN
+   ===================================================== */
+
+function openAdminLogin() {
+
+    document
+        .getElementById("adminModal")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("adminPin")
+        .focus();
+
+}
+
+
+function closeAdminLogin() {
+
+    document
+        .getElementById("adminModal")
+        .classList.add("hidden");
+
+}
+
+
+async function adminLogin() {
+
+    const pin =
+        document
+            .getElementById("adminPin")
+            .value
+            .trim();
+
+    if (!pin) {
+
+        showMessage(
+            "adminLoginMsg",
+            "❌ Introduce tu PIN."
+        );
+
+        return;
+    }
+
+    const { data, error } =
+        await sb
+            .from("administradores")
+            .select("*")
+            .eq("pin", pin)
+            .eq("activo", true)
+            .limit(1);
+
+    if (error) {
+
+        console.error(error);
+
+        showMessage(
+            "adminLoginMsg",
+            "❌ Error conectando con Supabase."
+        );
+
+        return;
+    }
+
+    if (!data || data.length === 0) {
+
+        showMessage(
+            "adminLoginMsg",
+            "❌ PIN incorrecto."
+        );
+
+        return;
+    }
+
+    currentAdmin = data[0];
+
+    closeAdminLogin();
+
+    document
+        .getElementById("admin")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("adminWelcome")
+        .textContent =
+        "Sesión: " +
+        currentAdmin.nombre +
+        " | " +
+        (
+            currentAdmin.rol === "owner"
+            ? "👑 Propietario"
+            : "🛡️ Administrador"
+        );
+
+    if (currentAdmin.rol === "owner") {
+
+        document
+            .getElementById("manageAdminsBtn")
+            .classList.remove("hidden");
+
+    }
+
+    await renderAdmin();
+
+}
+
+
+/* =====================================================
+   PANEL ADMIN
+   ===================================================== */
+
+async function renderAdmin() {
+
+    if (!currentAdmin) return;
+
+    const { data, error } =
+        await sb
+            .from("fichajes")
+            .select("*")
+            .order("entrada", {
+                ascending: false
+            });
+
+    if (error) {
+
+        console.error(error);
+
+        document
+            .getElementById("adminContent")
+            .innerHTML =
+            "<p>❌ Error cargando fichajes.</p>";
+
+        return;
+    }
+
+    let working = 0;
+    let total = 0;
+
+    data.forEach(row => {
+
+        if (!row.salida) {
+
+            working++;
+
+        }
+        else {
+
+            total +=
+                new Date(row.salida)
+                -
+                new Date(row.entrada);
+
+        }
+
+    });
+
+    document
+        .getElementById("totalEmployees")
+        .textContent =
+        employees.length;
+
+    document
+        .getElementById("workingEmployees")
+        .textContent =
+        working;
+
+    document
+        .getElementById("totalHours")
+        .textContent =
+        formatDuration(total);
+
+
+    let html = `
+
+        <table class="admin-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>Empleado</th>
+                    <th>Entrada</th>
+                    <th>Salida</th>
+                    <th>Total</th>
+                    <th>Acción</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+    `;
+
+
+    if (!data.length) {
+
+        html += `
+
+            <tr>
+                <td colspan="5">
+                    No hay fichajes todavía.
+                </td>
+            </tr>
+
+        `;
+
+    }
+
+
+    data.forEach(row => {
+
+        const totalRow =
+            row.salida
+            ? formatDuration(
+                new Date(row.salida)
+                -
+                new Date(row.entrada)
+              )
+            : "En curso";
+
+        html += `
+
+            <tr>
+
+                <td>
+                    ${escapeHTML(row.empleado)}
+                </td>
+
+                <td>
+                    ${formatDate(row.entrada)}
+                </td>
+
+                <td>
+                    ${
+                        row.salida
+                        ? formatDate(row.salida)
+                        : "🟢 Trabajando"
+                    }
+                </td>
+
+                <td>
+                    ${totalRow}
+                </td>
+
+                <td>
+
+                    <button
+                        class="btn-red"
+                        onclick="deleteLog(${row.id})"
+                    >
+                        🗑️
+                    </button>
+
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+
+    html += `
+
+            </tbody>
+
+        </table>
+
+    `;
+
+
+    document
+        .getElementById("adminContent")
+        .innerHTML = html;
+
+}
+
+
+/* =====================================================
+   BORRAR FICHAJE
+   ===================================================== */
+
+async function deleteLog(id) {
+
+    if (!currentAdmin) return;
+
+    if (!confirm(
+        "¿Seguro que quieres eliminar este fichaje?"
+    )) return;
+
+    const { error } =
+        await sb
+            .from("fichajes")
+            .delete()
+            .eq("id", id);
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            "❌ No se pudo eliminar."
+        );
+
+        return;
+    }
+
+    await renderAdmin();
+
+}
+
+
+/* =====================================================
+   ADMINISTRADORES
+   ===================================================== */
+
+async function showAdmins() {
+
+    if (
+        !currentAdmin ||
+        currentAdmin.rol !== "owner"
+    ) return;
+
+    const { data, error } =
+        await sb
+            .from("administradores")
+            .select("*")
+            .order("id", {
+                ascending: true
+            });
+
+    if (error) {
+
+        console.error(error);
+        return;
+
+    }
+
+    let html = `
+
+        <div style="margin-top:30px;">
+
+            <h2>👑 Gestión de administradores</h2>
+
+            <button
+                class="btn-green"
+                onclick="openNewAdmin()"
+            >
+                ➕ Añadir administrador
+            </button>
+
+            <div style="overflow-x:auto;">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Nombre</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+    `;
+
+
+    data.forEach(admin => {
+
+        html += `
+
+            <tr>
+
+                <td>
+                    ${escapeHTML(admin.nombre)}
+                </td>
+
+                <td>
+                    ${
+                        admin.rol === "owner"
+                        ? "👑 Propietario"
+                        : "🛡️ Administrador"
+                    }
+                </td>
+
+                <td>
+                    ${
+                        admin.activo
+                        ? "🟢 Activo"
+                        : "🔴 Desactivado"
+                    }
+                </td>
+
+                <td>
+
+                    ${
+                        admin.id !== currentAdmin.id
+                        ?
+                        `
+                        <button
+                            class="btn-red"
+                            onclick="deleteAdmin(${admin.id})"
+                        >
+                            🗑️
+                        </button>
+                        `
+                        :
+                        "Tu cuenta"
+                    }
+
+                </td>
+
+            </tr>
+
+        `;
+
+    });
+
+
+    html += `
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document
+        .getElementById("adminsContent")
+        .innerHTML = html;
+
+}
+
+
+/* =====================================================
+   CREAR ADMIN
+   ===================================================== */
+
+function openNewAdmin() {
+
+    document
+        .getElementById("newAdminModal")
+        .classList.remove("hidden");
+
+}
+
+
+function closeNewAdmin() {
+
+    document
+        .getElementById("newAdminModal")
+        .classList.add("hidden");
+
+}
+
+
+async function createAdmin() {
+
+    if (
+        !currentAdmin ||
+        currentAdmin.rol !== "owner"
+    ) return;
+
+    const nombre =
+        document
+            .getElementById("newAdminName")
+            .value
+            .trim();
+
+    const pin =
+        document
+            .getElementById("newAdminPin")
+            .value
+            .trim();
+
+    const rol =
+        document
+            .getElementById("newAdminRole")
+            .value;
+
+    if (!nombre || !pin) {
+
+        showMessage(
+            "newAdminMsg",
+            "❌ Completa todos los campos."
+        );
+
+        return;
+    }
+
+    if (pin.length < 4) {
+
+        showMessage(
+            "newAdminMsg",
+            "❌ El PIN debe tener al menos 4 números."
+        );
+
+        return;
+    }
+
+    const { error } =
+        await sb
+            .from("administradores")
+            .insert({
+
+                nombre: nombre,
+                pin: pin,
+                rol: rol,
+                activo: true
+
+            });
+
+    if (error) {
+
+        console.error(error);
+
+        showMessage(
+            "newAdminMsg",
+            "❌ Ese PIN ya existe."
+        );
+
+        return;
+    }
+
+    document
+        .getElementById("newAdminName")
+        .value = "";
+
+    document
+        .getElementById("newAdminPin")
+        .value = "";
+
+    closeNewAdmin();
+
+    await showAdmins();
+
+}
+
+
+/* =====================================================
+   ELIMINAR ADMIN
+   ===================================================== */
+
+async function deleteAdmin(id) {
+
+    if (
+        !currentAdmin ||
+        currentAdmin.rol !== "owner"
+    ) return;
+
+    if (!confirm(
+        "¿Seguro que quieres eliminar este administrador?"
+    )) return;
+
+    const { error } =
+        await sb
+            .from("administradores")
+            .delete()
+            .eq("id", id);
+
+    if (error) {
+
+        console.error(error);
+
+        alert(
+            "❌ No se pudo eliminar."
+        );
+
+        return;
+    }
+
+    await showAdmins();
+
+}
+
+
+/* =====================================================
+   EXPORTAR
+   ===================================================== */
+
+async function exportCSV() {
+
+    if (!currentAdmin) return;
+
+    const { data, error } =
+        await sb
+            .from("fichajes")
+            .select("*")
+            .order("entrada", {
+                ascending: true
+            });
+
+    if (error) {
+
+        alert(
+            "❌ No se pudieron cargar los datos."
+        );
+
+        return;
+    }
+
+    let csv =
+        "Empleado;Entrada;Salida;Horas\n";
+
+    data.forEach(row => {
+
+        const total =
+            row.salida
+            ? formatDuration(
+                new Date(row.salida)
+                -
+                new Date(row.entrada)
+              )
+            : "En curso";
+
+        csv +=
+            `"${row.empleado}";` +
+            `"${formatDate(row.entrada)}";` +
+            `"${row.salida
+                ? formatDate(row.salida)
+                : "En curso"}";` +
+            `"${total}"\n`;
+
+    });
+
+    const blob =
+        new Blob(
+            ["\ufeff" + csv],
+            {
+                type:
+                "text/csv;charset=utf-8;"
+            }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const a =
+        document.createElement("a");
+
+    a.href = url;
+
+    a.download =
+        "xtreme-adventure-fichajes.csv";
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+/* =====================================================
+   CERRAR ADMIN
+   ===================================================== */
+
+function closeAdmin() {
+
+    currentAdmin = null;
+
+    document
+        .getElementById("admin")
+        .classList.add("hidden");
+
+    document
+        .getElementById("adminsContent")
+        .innerHTML = "";
+
+}
+
+
+/* =====================================================
+   FUNCIONES
+   ===================================================== */
+
+function formatDuration(milliseconds) {
+
+    if (!milliseconds || milliseconds < 0)
+        return "0h 0min";
+
+    const minutes =
+        Math.floor(
+            milliseconds / 60000
+        );
+
+    const hours =
+        Math.floor(minutes / 60);
+
+    const mins =
+        minutes % 60;
+
+    return hours + "h " + mins + "min";
+
+}
+
+
+function formatDate(date) {
+
+    return new Date(date)
+        .toLocaleString(
+            "es-ES",
+            {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
+
+}
+
+
+function showMessage(id, text) {
+
+    document
+        .getElementById(id)
+        .innerHTML =
+        `<div class="message">${text}</div>`;
+
+}
+
+
+function setClockMessage(text) {
+
+    showMessage(
+        "clockMsg",
+        text
+    );
+
+}
+
+
+function escapeHTML(text) {
+
+    return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+/* =====================================================
+   INICIO
+   ===================================================== */
+
 renderEmployees();
-</script></body></html>
+
+</script>
+
+</body>
+</html>
