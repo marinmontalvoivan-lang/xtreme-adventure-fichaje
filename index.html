@@ -2545,9 +2545,12 @@ async function exportCSV() {
    CERRAR PANEL ADMIN
 ===================================================== */
 
-function closeAdmin() {
+function closeAdmin() { 
 
     currentAdmin = null;
+    function showBusinessSettings() {
+    alert("⚙️ Configuración del negocio");
+}
 
     document
         .getElementById("admin")
