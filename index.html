@@ -666,6 +666,30 @@ const sb = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_KEY 
 );
+async function cargarConfiguracionNegocio() {
+    const { data, error } = await sb
+        .from("configuracion_negocio")
+        .select("*")
+        .limit(1)
+        .single();
+
+    if (error) {
+        console.error("Error cargando configuración:", error);
+        return;
+    }
+
+    if (data) {
+        const nombre = document.getElementById("nombreNegocio");
+
+        if (nombre) {
+            nombre.textContent = data.nombre_negocio;
+        }
+
+        document.title = data.nombre_negocio + " - Fichajes";
+    }
+}
+
+cargarConfiguracionNegocio();
 
 
 /* =====================================================
