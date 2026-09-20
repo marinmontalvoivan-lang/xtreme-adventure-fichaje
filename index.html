@@ -445,6 +445,79 @@ button:hover {
             <button
                 class="btn-purple"
                 id="manageEmployeesBtn"
+                async function showBusinessSettings() {
+    const { data, error } = await sb
+        .from("configuracion_negocio")
+        .select("*")
+        .limit(1)
+        .single();
+
+    if (error) {
+        console.error("Error cargando configuración:", error);
+        alert("No se pudo cargar la configuración.");
+        return;
+    }
+
+    const nombreActual = data?.nombre_negocio || "Sistema de Fichajes";
+    const descripcionActual = data?.descripcion || "";
+    const logoActual = data?.logo_url || "";
+    const propietarioActual = data?.propietario || "";
+
+    const nombre = prompt(
+        "🏢 Nombre del negocio:",
+        nombreActual
+    );
+
+    if (nombre === null) return;
+
+    const descripcion = prompt(
+        "📝 Descripción del negocio:",
+        descripcionActual
+    );
+
+    if (descripcion === null) return;
+
+    const propietario = prompt(
+        "👤 Nombre del propietario:",
+        propietarioActual
+    );
+
+    if (propietario === null) return;
+
+    const logo = prompt(
+        "🖼️ URL del logo:",
+        logoActual
+    );
+
+    if (logo === null) return;
+
+    const { error: updateError } = await sb
+        .from("configuracion_negocio")
+        .update({
+            nombre_negocio: nombre.trim() || "Sistema de Fichajes",
+            descripcion: descripcion.trim(),
+            propietario: propietario.trim(),
+            logo_url: logo.trim()
+        })
+        .eq("id", data.id);
+
+    if (updateError) {
+        console.error("Error guardando configuración:", updateError);
+        alert("❌ No se pudo guardar la configuración.");
+        return;
+    }
+
+    const titulo = document.getElementById("nombreNegocio");
+
+    if (titulo) {
+        titulo.textContent = nombre.trim() || "Sistema de Fichajes";
+    }
+
+    document.title =
+        (nombre.trim() || "Sistema de Fichajes") + " - Fichajes";
+
+    alert("✅ Configuración guardada correctamente.");
+}
                 onclick="showEmployeesManagement()"
             >
                 👤 Empleados
